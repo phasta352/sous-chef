@@ -1,0 +1,17 @@
+{
+  "name": "sous-chef",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Household pantry and fridge tracker with barcode scanning and AI recipe ideas, hosted on Cloudflare.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler d1 migrations apply sous-chef --remote && wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply sous-chef --local",
+    "db:migrate:remote": "wrangler d1 migrations apply sous-chef --remote",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "wrangler": "^4.150.0"
+  }
+}

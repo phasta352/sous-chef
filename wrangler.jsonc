@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sous-chef",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-11-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "sous-chef",
+      // Replace with the id printed by `npx wrangler d1 create sous-chef` (see docs/SETUP.md).
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    // Your Zero Trust team domain, e.g. "yourteam.cloudflareaccess.com" (see docs/SETUP.md).
+    "ACCESS_TEAM_DOMAIN": "",
+    // The Application Audience (AUD) tag of the Access application protecting this app.
+    "ACCESS_AUD": ""
+  },
+  "observability": { "enabled": true }
+}
