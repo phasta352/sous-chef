@@ -13,8 +13,7 @@
     {
       "binding": "DB",
       "database_name": "sous-chef",
-      // Replace with the id printed by `npx wrangler d1 create sous-chef` (see docs/SETUP.md).
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "database_id": "fe62912b-0bfd-4c9c-bf69-0ff5b3d69be9",
       "migrations_dir": "migrations"
     }
   ],
