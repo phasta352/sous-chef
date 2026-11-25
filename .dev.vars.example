@@ -1,0 +1,4 @@
+# Copy to .dev.vars for local development with `npm run dev`.
+# DEV_USER_EMAIL skips the Cloudflare Access check locally and signs you in as this address.
+# Never set it in production.
+DEV_USER_EMAIL=you@example.com
