@@ -18,10 +18,8 @@
     }
   ],
   "vars": {
-    // Your Zero Trust team domain, e.g. "yourteam.cloudflareaccess.com" (see docs/SETUP.md).
-    "ACCESS_TEAM_DOMAIN": "",
-    // The Application Audience (AUD) tag of the Access application protecting this app.
-    "ACCESS_AUD": ""
+    "ACCESS_TEAM_DOMAIN": "broken-snowflake-9ddc.cloudflareaccess.com",
+    "ACCESS_AUD": "95059a1661571d6f28a404da66b221f947b88b8c6ea90bb61e4932a4b92f8a70"
   },
   "observability": { "enabled": true }
 }
