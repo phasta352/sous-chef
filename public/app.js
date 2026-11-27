@@ -32,7 +32,9 @@ const els = {
   itemNote: $('item-note'),
   itemName: $('item-name'),
   itemCategory: $('item-category'),
-  itemInStock: $('item-instock'),
+  itemQty: $('item-qty'),
+  itemQtyMinus: $('item-qty-minus'),
+  itemQtyPlus: $('item-qty-plus'),
   itemBarcode: $('item-barcode'),
   itemDelete: $('item-delete'),
   itemCancel: $('item-cancel'),
@@ -40,10 +42,11 @@ const els = {
   knownDialog: $('known-dialog'),
   knownName: $('known-name'),
   knownStatus: $('known-status'),
-  knownHave: $('known-have'),
-  knownNeed: $('known-need'),
+  knownDone: $('known-done'),
+  knownScan: $('known-scan'),
+  knownMinus: $('known-minus'),
+  knownZero: $('known-zero'),
   knownEdit: $('known-edit'),
-  knownClose: $('known-close'),
   toast: $('toast'),
 };
 
@@ -105,24 +108,55 @@ function render() {
       const nameBtn = el('button', { type: 'button', className: 'item-name', textContent: item.name, title: 'Edit' });
       nameBtn.addEventListener('click', () => openEdit(item));
 
-      const stockBtn = el('button', {
-        type: 'button',
-        className: `stock ${item.inStock ? 'have' : 'need'}`,
-        textContent: item.inStock ? 'Have' : "Don't have",
-      });
-      stockBtn.setAttribute('aria-pressed', String(item.inStock));
-      stockBtn.setAttribute('aria-label', `${item.name}: ${item.inStock ? 'have' : "don't have"}. Tap to change.`);
-      stockBtn.addEventListener('click', () => setStock(item, !item.inStock));
+      const minus = el('button', { type: 'button', className: 'step', textContent: '−', disabled: item.quantity === 0 });
+      minus.setAttribute('aria-label', `One less ${item.name}`);
+      minus.addEventListener('click', () => setQuantity(item, item.quantity - 1));
+      const plus = el('button', { type: 'button', className: 'step', textContent: '+' });
+      plus.setAttribute('aria-label', `One more ${item.name}`);
+      plus.addEventListener('click', () => setQuantity(item, item.quantity + 1));
+      const qty = el('span', { className: 'qty', textContent: item.quantity === 0 ? 'Out' : String(item.quantity) });
+      qty.setAttribute('aria-label', `${item.name}: ${item.quantity}`);
+      const stepper = el('div', { className: 'stepper' }, [minus, qty, plus]);
 
-      ul.append(el('li', { className: `item ${item.inStock ? 'have' : 'need'}` }, [nameBtn, stockBtn]));
+      ul.append(el('li', { className: `item ${item.inStock ? 'have' : 'need'}` }, [nameBtn, stepper]));
     }
     els.list.append(el('section', { className: 'group' }, [el('h2', { textContent: label }), ul]));
   }
 }
 
+// +/- taps update the screen right away and are saved after a short pause,
+// so several quick taps become one request.
+const pendingQty = new Map();
+function setQuantity(item, quantity) {
+  const q = Math.max(0, Math.min(999, quantity));
+  if (!pendingQty.has(item.id)) pendingQty.set(item.id, { previous: item.quantity });
+  item.quantity = q;
+  item.inStock = q > 0;
+  store.changed();
+  render();
+  const pending = pendingQty.get(item.id);
+  clearTimeout(pending.timer);
+  pending.timer = setTimeout(async () => {
+    pendingQty.delete(item.id);
+    try {
+      const { item: updated } = await api(`/api/items/${item.id}`, { method: 'PATCH', body: { quantity: item.quantity } });
+      upsertLocal(updated);
+      render();
+    } catch (err) {
+      item.quantity = pending.previous;
+      item.inStock = pending.previous > 0;
+      store.changed();
+      render();
+      toast(err.message);
+    }
+  }, 500);
+}
+
 async function setStock(item, inStock) {
   const previous = item.inStock;
+  const previousQty = item.quantity;
   item.inStock = inStock; // optimistic
+  item.quantity = inStock ? Math.max(1, item.quantity) : 0;
   render();
   try {
     const { item: updated } = await api(`/api/items/${item.id}`, { method: 'PATCH', body: { inStock } });
@@ -131,6 +165,7 @@ async function setStock(item, inStock) {
     return updated;
   } catch (err) {
     item.inStock = previous;
+    item.quantity = previousQty;
     render();
     toast(err.message);
     return null;
@@ -151,14 +186,14 @@ async function loadItems() {
 
 // ---------- Add / edit dialog ----------
 
-function openItemDialog({ title, note = '', name = '', category = 'pantry', inStock = true, barcode = null, id = null }) {
+function openItemDialog({ title, note = '', name = '', category = 'pantry', quantity = 1, barcode = null, id = null }) {
   state.editing = { id, barcode };
   els.itemTitle.textContent = title;
   els.itemNote.textContent = note;
   els.itemNote.hidden = !note;
   els.itemName.value = name;
   els.itemCategory.value = category;
-  els.itemInStock.checked = inStock;
+  els.itemQty.value = String(quantity);
   els.itemBarcode.textContent = barcode ? `Barcode ${barcode} will be remembered for next time.` : '';
   els.itemBarcode.hidden = !barcode;
   els.itemDelete.hidden = !id;
@@ -173,7 +208,7 @@ function openEdit(item) {
     id: item.id,
     name: item.name,
     category: item.category,
-    inStock: item.inStock,
+    quantity: item.quantity,
     barcode: null,
   });
   if (item.barcode) {
@@ -187,7 +222,7 @@ els.itemForm.addEventListener('submit', async (e) => {
   const body = {
     name: els.itemName.value,
     category: els.itemCategory.value,
-    inStock: els.itemInStock.checked,
+    quantity: Number(els.itemQty.value || 0),
   };
   els.itemSave.disabled = true;
   try {
@@ -206,6 +241,12 @@ els.itemForm.addEventListener('submit', async (e) => {
 });
 
 els.itemCancel.addEventListener('click', () => els.itemDialog.close());
+function bumpDialogQty(delta) {
+  const q = Math.max(0, Math.min(999, (parseInt(els.itemQty.value, 10) || 0) + delta));
+  els.itemQty.value = String(q);
+}
+els.itemQtyMinus.addEventListener('click', () => bumpDialogQty(-1));
+els.itemQtyPlus.addEventListener('click', () => bumpDialogQty(1));
 
 els.itemDelete.addEventListener('click', async () => {
   const { id } = state.editing;
@@ -235,26 +276,42 @@ els.addBtn.addEventListener('click', () => openItemDialog({ title: 'Add item' })
 
 // ---------- Known item dialog (scanned something already in the pantry) ----------
 
+// Scanning something you already have adds one straight away (you just bought it).
+// The dialog confirms it and offers the other cases: you used one, or used it all.
 function openKnown(item) {
-  state.known = item;
+  const before = item.quantity;
+  state.known = { id: item.id, before };
+  setQuantity(item, before + 1);
   els.knownName.textContent = item.name;
-  els.knownStatus.textContent = `${CATEGORY_LABELS[item.category] || 'Pantry'} · currently ${item.inStock ? 'have' : "don't have"}`;
+  els.knownStatus.textContent = `Added 1. You now have ${before + 1}.`;
+  els.knownMinus.disabled = before === 0;
+  els.knownZero.disabled = false;
   els.knownDialog.showModal();
 }
 
-async function knownSet(inStock) {
-  const item = state.items.find((i) => i.id === state.known.id) || state.known;
-  els.knownDialog.close();
-  const updated = await setStock(item, inStock);
-  if (updated) toast(`${updated.name}: ${inStock ? 'have' : "don't have"}`);
+function knownItem() {
+  return state.items.find((i) => i.id === state.known.id);
 }
 
-els.knownHave.addEventListener('click', () => knownSet(true));
-els.knownNeed.addEventListener('click', () => knownSet(false));
-els.knownClose.addEventListener('click', () => els.knownDialog.close());
+function knownApply(quantity) {
+  const item = knownItem();
+  els.knownDialog.close();
+  if (!item) return;
+  setQuantity(item, Math.max(0, quantity));
+  toast(item.quantity === 0 ? `${item.name}: used up, added to shopping` : `${item.name}: ${item.quantity}`);
+}
+
+els.knownDone.addEventListener('click', () => els.knownDialog.close());
+els.knownMinus.addEventListener('click', () => knownApply(state.known.before - 1));
+els.knownZero.addEventListener('click', () => knownApply(0));
+els.knownScan.addEventListener('click', () => {
+  els.knownDialog.close();
+  els.scanBtn.click();
+});
 els.knownEdit.addEventListener('click', () => {
   els.knownDialog.close();
-  openEdit(state.items.find((i) => i.id === state.known.id) || state.known);
+  const item = knownItem();
+  if (item) openEdit(item);
 });
 
 // ---------- Scanning ----------

@@ -1,6 +1,6 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { getPlatformProxy } from 'wrangler';
 import worker from '../src/worker.js';
 import { deps, guessCategory, parseOpenFoodFacts } from '../src/items.js';
@@ -11,9 +11,12 @@ const offResponses = new Map();
 
 before(async () => {
   proxy = await getPlatformProxy({ persist: false });
-  const sql = readFileSync(new URL('../migrations/0001_init.sql', import.meta.url), 'utf8');
-  for (const stmt of sql.split(';').map((s) => s.replace(/--.*$/gm, '').trim()).filter(Boolean)) {
-    await proxy.env.DB.prepare(stmt).run();
+  const dir = new URL('../migrations/', import.meta.url);
+  for (const file of readdirSync(dir).sort()) {
+    const sql = readFileSync(new URL(file, dir), 'utf8');
+    for (const stmt of sql.split(';').map((s) => s.replace(/--.*$/gm, '').trim()).filter(Boolean)) {
+      await proxy.env.DB.prepare(stmt).run();
+    }
   }
   env = { DB: proxy.env.DB, DEV_USER_EMAIL: 'ben@example.com' };
   deps.fetch = async (url) => {
@@ -113,6 +116,39 @@ test('create, remember barcode, toggle, edit, delete', async () => {
   assert.equal(r.status, 200);
   r = await call('DELETE', `/api/items/${eggs.id}`);
   assert.equal(r.status, 404);
+});
+
+test('quantities: default 1, explicit, +/- via PATCH, 0 means don\'t have', async () => {
+  let r = await call('POST', '/api/items', { name: 'Tinned tomatoes', quantity: 4 });
+  const tins = r.body.item;
+  assert.equal(tins.quantity, 4);
+  assert.equal(tins.inStock, true);
+
+  r = await call('POST', '/api/items', { name: 'Flour' });
+  assert.equal(r.body.item.quantity, 1);
+
+  r = await call('POST', '/api/items', { name: 'Milk', inStock: false });
+  assert.equal(r.body.item.quantity, 0);
+  assert.equal(r.body.item.inStock, false);
+  const milk = r.body.item;
+
+  r = await call('PATCH', `/api/items/${tins.id}`, { quantity: 0 });
+  assert.equal(r.body.item.inStock, false);
+  r = await call('PATCH', `/api/items/${tins.id}`, { inStock: true });
+  assert.equal(r.body.item.quantity, 1);
+  r = await call('PATCH', `/api/items/${tins.id}`, { quantity: 3 });
+  r = await call('PATCH', `/api/items/${tins.id}`, { inStock: true });
+  assert.equal(r.body.item.quantity, 3, 'marking have keeps an existing count');
+  r = await call('PATCH', `/api/items/${tins.id}`, { inStock: false });
+  assert.equal(r.body.item.quantity, 0);
+
+  r = await call('PATCH', `/api/items/${milk.id}`, { quantity: 2, name: 'Whole milk' });
+  assert.equal(r.body.item.quantity, 2);
+  assert.equal(r.body.item.name, 'Whole milk');
+
+  assert.equal((await call('PATCH', `/api/items/${milk.id}`, { quantity: -1 })).status, 400);
+  assert.equal((await call('PATCH', `/api/items/${milk.id}`, { quantity: 1.5 })).status, 400);
+  assert.equal((await call('POST', '/api/items', { name: 'X', quantity: 5000 })).status, 400);
 });
 
 test('validation errors', async () => {
