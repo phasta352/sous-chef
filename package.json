@@ -12,6 +12,7 @@
     "test": "node --test"
   },
   "devDependencies": {
+    "@zxing/library": "^0.21.3",
     "wrangler": "^4.150.0"
   }
 }

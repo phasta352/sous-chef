@@ -20,16 +20,92 @@
   </header>
 
   <main id="main">
-    <section id="status" class="card">
-      <p>Loading…</p>
-    </section>
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="Search your pantry" autocomplete="off" aria-label="Search items">
+      <div class="chips" role="radiogroup" aria-label="Show">
+        <button type="button" class="chip" data-filter="all" aria-pressed="true">All</button>
+        <button type="button" class="chip" data-filter="have" aria-pressed="false">Have</button>
+        <button type="button" class="chip" data-filter="need" aria-pressed="false">Don't have</button>
+      </div>
+    </div>
 
-    <section class="card empty">
-      <h2>Your pantry is empty</h2>
-      <p>Barcode scanning and the item list arrive in the next step.</p>
-    </section>
+    <p id="error" class="banner error" hidden></p>
+    <div id="list" aria-live="polite"><p class="muted center">Loading…</p></div>
   </main>
 
+  <nav class="actions">
+    <button type="button" id="scan-btn" class="btn primary">
+      <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M3 5h2v14H3zm4 0h1v14H7zm3 0h2v14h-2zm4 0h1v14h-1zm3 0h1v14h-1zm3 0h1v14h-1z"/></svg>
+      Scan barcode
+    </button>
+    <button type="button" id="add-btn" class="btn">Add manually</button>
+  </nav>
+
+  <!-- Camera scanner -->
+  <section id="scanner" class="scanner" hidden aria-label="Barcode scanner">
+    <video id="video" playsinline muted></video>
+    <div class="scan-frame" aria-hidden="true"></div>
+    <div class="scanner-bottom">
+      <p id="scan-status">Point the camera at a barcode</p>
+      <form id="type-form" class="type-form">
+        <input id="type-barcode" inputmode="numeric" placeholder="Or type the barcode number" aria-label="Barcode number" autocomplete="off">
+        <button type="submit" class="btn">Go</button>
+      </form>
+      <button type="button" id="scan-cancel" class="btn">Cancel</button>
+    </div>
+  </section>
+
+  <!-- Add / edit item -->
+  <dialog id="item-dialog">
+    <form id="item-form" method="dialog">
+      <h2 id="item-title">Add item</h2>
+      <p id="item-note" class="muted" hidden></p>
+      <label>Name
+        <input id="item-name" name="name" required maxlength="120" autocomplete="off">
+      </label>
+      <label>Where it lives
+        <select id="item-category" name="category">
+          <option value="pantry">Pantry</option>
+          <option value="fridge">Fridge</option>
+          <option value="freezer">Freezer</option>
+          <option value="spices">Spices &amp; herbs</option>
+          <option value="other">Other</option>
+        </select>
+      </label>
+      <label class="switch-row">
+        <span>I have it</span>
+        <input id="item-instock" type="checkbox" role="switch" checked>
+      </label>
+      <p id="item-barcode" class="muted small" hidden></p>
+      <div class="dialog-buttons">
+        <button type="button" id="item-delete" class="btn danger" hidden>Delete</button>
+        <span class="spacer"></span>
+        <button type="button" id="item-cancel" class="btn">Cancel</button>
+        <button type="submit" id="item-save" class="btn primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Scanned an item that's already in the pantry -->
+  <dialog id="known-dialog">
+    <div class="known">
+      <h2 id="known-name"></h2>
+      <p id="known-status" class="muted"></p>
+      <div class="known-buttons">
+        <button type="button" id="known-have" class="btn primary">I have it</button>
+        <button type="button" id="known-need" class="btn">Used it up</button>
+      </div>
+      <div class="dialog-buttons">
+        <button type="button" id="known-edit" class="btn link">Edit</button>
+        <span class="spacer"></span>
+        <button type="button" id="known-close" class="btn">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script src="/vendor/zxing-0.21.3.min.js" defer></script>
   <script src="/app.js" type="module"></script>
 </body>
 </html>
