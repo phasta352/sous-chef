@@ -1,4 +1,7 @@
 import { createScanner } from './scanner.js';
+import { api, toast, el, store } from './lib.js';
+import { initRecipes } from './recipes.js';
+import { initShopping } from './shopping.js';
 
 const CATEGORY_LABELS = {
   pantry: 'Pantry',
@@ -45,57 +48,26 @@ const els = {
 };
 
 const state = {
-  items: [],
+  get items() { return store.items; },
+  set items(v) { store.setItems(v); },
   filter: 'all',
   query: '',
   editing: null, // { id?, barcode? }
   known: null,
 };
 
-// ---------- API ----------
-
-async function api(path, options = {}) {
-  const res = await fetch(path, {
-    credentials: 'same-origin',
-    headers: options.body ? { 'content-type': 'application/json' } : {},
-    ...options,
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  });
-  let data = null;
-  try { data = await res.json(); } catch { /* empty */ }
-  if (!res.ok) {
-    if (res.status === 401) throw new Error('Your sign-in expired. Reload the page to sign in again.');
-    throw new Error(data?.error || `Request failed (${res.status})`);
-  }
-  return data;
-}
-
 function upsertLocal(item) {
   const i = state.items.findIndex((x) => x.id === item.id);
   if (i >= 0) state.items[i] = item;
   else state.items.push(item);
+  store.changed();
 }
 
 // ---------- UI helpers ----------
 
-let toastTimer;
-function toast(message) {
-  els.toast.textContent = message;
-  els.toast.hidden = false;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { els.toast.hidden = true; }, 2600);
-}
-
 function showError(message) {
   els.error.textContent = message;
   els.error.hidden = !message;
-}
-
-function el(tag, props = {}, children = []) {
-  const node = document.createElement(tag);
-  Object.assign(node, props);
-  for (const child of [].concat(children)) node.append(child);
-  return node;
 }
 
 // ---------- List ----------
@@ -370,6 +342,24 @@ els.chips.forEach((chip) => {
 
 // ---------- Start ----------
 
+// ---------- Tabs ----------
+
+const shopping = initShopping({ setStock });
+const recipes = initRecipes({ onShoppingChanged: () => shopping.load() });
+const views = { pantry: null, recipes, shopping };
+
+function showView(name) {
+  document.querySelectorAll('.tab').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.view === name)));
+  for (const key of Object.keys(views)) document.getElementById(`view-${key}`).hidden = key !== name;
+  document.getElementById('pantry-actions').hidden = name !== 'pantry';
+  document.body.classList.toggle('on-pantry', name === 'pantry');
+  window.scrollTo(0, 0);
+  views[name]?.show();
+  try { localStorage.setItem('view', name); } catch { /* ignore */ }
+}
+
+document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => showView(t.dataset.view)));
+
 async function init() {
   try {
     const me = await api('/api/me');
@@ -379,6 +369,10 @@ async function init() {
     return;
   }
   await loadItems();
+  shopping.load();
+  let start = 'pantry';
+  try { start = localStorage.getItem('view') || 'pantry'; } catch { /* ignore */ }
+  showView(views[start] !== undefined ? start : 'pantry');
 }
 
 // Refresh when coming back to the app, so changes from the other phone show up.

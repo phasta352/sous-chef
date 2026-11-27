@@ -240,3 +240,113 @@ dialog p { margin: 0; }
   font-size: 0.95rem;
   max-width: calc(100vw - 32px);
 }
+
+/* Tabs */
+.tabs {
+  position: sticky;
+  top: calc(52px + env(safe-area-inset-top));
+  z-index: 4;
+  display: flex;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  flex: 1;
+  border: 0;
+  background: none;
+  padding: 12px 8px;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+}
+.tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.count {
+  display: inline-block;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 0.75rem;
+  line-height: 20px;
+}
+body:not(.on-pantry) main { padding-bottom: calc(32px + env(safe-area-inset-bottom)); }
+
+/* Cards & forms */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.card h2, .section-head h2 { margin: 0 0 10px; font-size: 1.05rem; }
+.stack { display: grid; gap: 10px; }
+.row { display: flex; gap: 8px; margin-bottom: 16px; }
+.card .row { margin-bottom: 0; }
+.row input, .stack input:not([type="checkbox"]) {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.switch-row.inline { display: flex; align-items: center; justify-content: space-between; font-weight: 500; }
+.switch-row.inline input { width: 22px; height: 22px; accent-color: var(--accent); }
+.section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0 10px; flex-wrap: wrap; }
+.section-head h2 { margin: 0; }
+
+/* Recipe cards */
+.recipe-cards { display: grid; gap: 10px; margin-bottom: 16px; }
+.recipe-card {
+  text-align: left;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer;
+  display: grid;
+  gap: 4px;
+}
+.recipe-card strong { font-size: 1.02rem; }
+.recipe-card .summary { color: var(--muted); font-size: 0.92rem; }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.tag { font-size: 0.78rem; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.tag.need { background: transparent; color: var(--need); border: 1px solid currentColor; }
+.loading { display: flex; align-items: center; gap: 10px; justify-content: center; padding: 20px; color: var(--muted); }
+.spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Recipe dialog */
+.recipe-dialog { width: min(96vw, 560px); max-height: 88vh; padding: 0; }
+.recipe { padding: 20px 20px 0; display: grid; gap: 8px; }
+.recipe h3 { margin: 10px 0 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.recipe-head { display: flex; align-items: flex-start; gap: 8px; }
+.recipe-head h2 { flex: 1; margin: 0; }
+.star { border: 0; background: none; font-size: 1.6rem; line-height: 1; color: var(--need); cursor: pointer; padding: 0 4px; }
+.ingredients { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.ingredients li { display: flex; gap: 8px; align-items: baseline; }
+.ingredients .mark { flex: none; width: 1.2em; font-weight: 700; color: var(--accent); }
+.ingredients li.missing .mark { color: var(--need); }
+.ingredients li.missing .ing-name { color: var(--need); }
+.ingredients .amount { color: var(--muted); }
+.steps { margin: 0; padding-left: 1.4em; display: grid; gap: 8px; }
+.sticky { position: sticky; bottom: 0; background: var(--surface); padding: 12px 0 16px; border-top: 1px solid var(--border); margin-top: 8px; }
+
+/* Saved list & shopping list reuse .group / .item styles */
+.item .meta { font-size: 0.8rem; color: var(--muted); }
+.item-main { flex: 1; min-width: 0; display: grid; }
+.item-main .item-name { padding: 0; }
+.check {
+  flex: none;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: none;
+  cursor: pointer;
+}
+.check:active { background: var(--accent-soft); }

@@ -46,12 +46,26 @@ Why both Access and the code check? Access blocks strangers at Cloudflare's edge
 
 Your wife does the same on her phone with her own email.
 
+## 5. Turn on AI recipes (Claude API key)
+
+Recipe suggestions and importing recipes from websites use the Claude API, which is pay-as-you-go. With the current settings a suggestion or an import typically costs a few cents (roughly 5 to 15 cents).
+
+1. Go to <https://console.anthropic.com>, sign in, and add a payment method under **Billing**. Setting a **monthly spend limit** there is a good idea (for example $10).
+2. Open **API Keys → Create Key**, name it `sous-chef`, and copy the key. It's shown only once.
+3. In Cloudflare, open the `sous-chef` Worker → **Settings → Variables and Secrets → Add**.
+4. Choose type **Secret**, name it `ANTHROPIC_API_KEY`, paste the key as the value, and click **Deploy**.
+
+Keep the key secret: don't paste it into chat, email, or any file in this repository. Cloudflare keeps secrets encrypted and they survive future deploys. If a key ever leaks, delete it in the Anthropic console and create a new one.
+
+Preview builds of pull requests don't get the key, so AI features show "not set up" there. That's expected.
+
 ## Local development (optional)
 
 ```sh
 npm install
 cp .dev.vars.example .dev.vars   # signs you in as a fake user locally
 npm run db:migrate:local
+# optional, to try AI features locally: add ANTHROPIC_API_KEY=... to .dev.vars
 npm run dev                      # http://localhost:8787
 npm test
 ```
