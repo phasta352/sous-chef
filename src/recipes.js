@@ -101,9 +101,9 @@ export async function deleteRecipe(env, id) {
 
 export async function suggest(env, request) {
   const body = await readJson(request);
-  const { results } = await env.DB.prepare('SELECT name FROM items WHERE in_stock = 1 ORDER BY name').all();
+  const { results } = await env.DB.prepare('SELECT name, quantity FROM items WHERE quantity > 0 ORDER BY name').all();
   const recipes = await suggestRecipes(env, {
-    haveItems: results.map((r) => r.name),
+    haveItems: results.map((r) => (r.quantity > 1 ? `${r.name} (${r.quantity})` : r.name)),
     allowShopping: Boolean(body.allowShopping),
     request: body.request,
     count: body.count,

@@ -76,13 +76,30 @@ async function lookupOpenFoodFacts(barcode) {
   }
 }
 
+const MAX_QUANTITY = 999;
+
+/** Work out the quantity from a request body: explicit quantity wins, else inStock. */
+function quantityFrom(body, current = null) {
+  if ('quantity' in body && body.quantity !== null && body.quantity !== '') {
+    const q = Number(body.quantity);
+    if (!Number.isInteger(q) || q < 0 || q > MAX_QUANTITY) throw new HttpError(400, `Quantity must be a whole number from 0 to ${MAX_QUANTITY}`);
+    return q;
+  }
+  if ('inStock' in body) {
+    if (!body.inStock) return 0;
+    return current && current > 0 ? current : 1;
+  }
+  return null;
+}
+
 function rowToItem(row) {
   return {
     id: row.id,
     barcode: row.barcode,
     name: row.name,
     category: row.category,
-    inStock: row.in_stock === 1,
+    quantity: row.quantity,
+    inStock: row.quantity > 0,
     updatedAt: row.updated_at,
     updatedBy: row.updated_by,
   };
@@ -128,24 +145,25 @@ export async function createItem(env, request, email) {
   const barcode = normalizeBarcode(body.barcode);
   const name = cleanName(body.name);
   const category = cleanCategory(body.category);
-  const inStock = body.inStock === false ? 0 : 1;
+  const quantity = quantityFrom(body) ?? 1;
+  const inStock = quantity > 0 ? 1 : 0;
 
   if (barcode) {
     // Same barcode scanned again: update the existing item instead of duplicating it.
     const row = await env.DB.prepare(
-      `INSERT INTO items (barcode, name, category, in_stock, updated_by)
-       VALUES (?1, ?2, ?3, ?4, ?5)
+      `INSERT INTO items (barcode, name, category, in_stock, quantity, updated_by)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6)
        ON CONFLICT (barcode) DO UPDATE SET
          name = excluded.name, category = excluded.category, in_stock = excluded.in_stock,
-         updated_by = excluded.updated_by, updated_at = datetime('now')
+         quantity = excluded.quantity, updated_by = excluded.updated_by, updated_at = datetime('now')
        RETURNING *`,
-    ).bind(barcode, name, category, inStock, email).first();
+    ).bind(barcode, name, category, inStock, quantity, email).first();
     return rowToItem(row);
   }
 
   const row = await env.DB.prepare(
-    'INSERT INTO items (name, category, in_stock, updated_by) VALUES (?1, ?2, ?3, ?4) RETURNING *',
-  ).bind(name, category, inStock, email).first();
+    'INSERT INTO items (name, category, in_stock, quantity, updated_by) VALUES (?1, ?2, ?3, ?4, ?5) RETURNING *',
+  ).bind(name, category, inStock, quantity, email).first();
   return rowToItem(row);
 }
 
@@ -155,7 +173,15 @@ export async function updateItem(env, request, id, email) {
   const values = [];
   if ('name' in body) { sets.push('name = ?'); values.push(cleanName(body.name)); }
   if ('category' in body) { sets.push('category = ?'); values.push(cleanCategory(body.category)); }
-  if ('inStock' in body) { sets.push('in_stock = ?'); values.push(body.inStock ? 1 : 0); }
+  if ('quantity' in body || 'inStock' in body) {
+    const current = await env.DB.prepare('SELECT quantity FROM items WHERE id = ?').bind(id).first();
+    if (!current) throw new HttpError(404, 'Item not found');
+    const q = quantityFrom(body, current.quantity);
+    if (q !== null) {
+      sets.push('quantity = ?', 'in_stock = ?');
+      values.push(q, q > 0 ? 1 : 0);
+    }
+  }
   if (sets.length === 0) throw new HttpError(400, 'Nothing to update');
   sets.push("updated_at = datetime('now')", 'updated_by = ?');
   values.push(email, id);

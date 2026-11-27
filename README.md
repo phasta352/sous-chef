@@ -1,6 +1,6 @@
 # Sous Chef
 
-A household pantry and fridge tracker for phones. Scan a barcode to add an item, mark things as have / don't have, and get AI recipe ideas from what's in stock, with a shopping list for what's missing.
+A household pantry and fridge tracker for phones. Scan a barcode to add an item, keep a count of each item (0 means you don't have it), and get AI recipe ideas from what's in stock, with a shopping list for what's missing.
 
 Runs on Cloudflare's free tier: a Worker serves the app and API, D1 stores the inventory, and Cloudflare Access handles sign-in.
 

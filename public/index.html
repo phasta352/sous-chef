@@ -122,10 +122,15 @@
           <option value="other">Other</option>
         </select>
       </label>
-      <label class="switch-row">
-        <span>I have it</span>
-        <input id="item-instock" type="checkbox" role="switch" checked>
-      </label>
+      <div class="qty-row">
+        <label for="item-qty">How many</label>
+        <div class="stepper big">
+          <button type="button" id="item-qty-minus" class="step" aria-label="One less">−</button>
+          <input id="item-qty" type="number" inputmode="numeric" min="0" max="999" step="1" value="1">
+          <button type="button" id="item-qty-plus" class="step" aria-label="One more">+</button>
+        </div>
+      </div>
+      <p class="muted small">0 means you don't have it. It goes on the shopping list.</p>
       <p id="item-barcode" class="muted small" hidden></p>
       <div class="dialog-buttons">
         <button type="button" id="item-delete" class="btn danger" hidden>Delete</button>
@@ -141,14 +146,16 @@
     <div class="known">
       <h2 id="known-name"></h2>
       <p id="known-status" class="muted"></p>
+      <button type="button" id="known-done" class="btn primary">Done</button>
+      <p class="muted small">Not what you meant?</p>
       <div class="known-buttons">
-        <button type="button" id="known-have" class="btn primary">I have it</button>
-        <button type="button" id="known-need" class="btn">Used it up</button>
+        <button type="button" id="known-minus" class="btn">I used one</button>
+        <button type="button" id="known-zero" class="btn">All used up</button>
       </div>
       <div class="dialog-buttons">
         <button type="button" id="known-edit" class="btn link">Edit</button>
         <span class="spacer"></span>
-        <button type="button" id="known-close" class="btn">Close</button>
+        <button type="button" id="known-scan" class="btn">Scan another</button>
       </div>
     </div>
   </dialog>
