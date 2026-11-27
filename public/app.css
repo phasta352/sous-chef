@@ -350,3 +350,32 @@ body:not(.on-pantry) main { padding-bottom: calc(32px + env(safe-area-inset-bott
   cursor: pointer;
 }
 .check:active { background: var(--accent-soft); }
+
+/* Quantity stepper */
+.stepper { flex: none; display: flex; align-items: center; gap: 2px; }
+.step {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--accent);
+}
+.step:disabled { opacity: 0.35; cursor: default; }
+.qty { min-width: 36px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.item.need .qty { color: var(--need); font-size: 0.85rem; }
+.qty-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-weight: 600; }
+.stepper.big .step { width: 42px; height: 42px; }
+.stepper.big input {
+  width: 64px !important;
+  text-align: center;
+  font-weight: 700;
+  padding: 8px 4px !important;
+  -moz-appearance: textfield;
+}
+.stepper.big input::-webkit-outer-spin-button,
+.stepper.big input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+#known-zero { width: 100%; }

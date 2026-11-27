@@ -78,7 +78,8 @@ Suggest practical, tasty home recipes based on what the household has in stock.
 Write ingredient amounts in metric units, with everyday units (tbsp, tsp, pieces) where natural.
 Keep steps short and clear, one action per step.
 Assume salt, pepper, cooking oil and water are always available; list them as ingredients with inPantry true.
-Mark inPantry true only for ingredients that appear in the pantry list (or the always-available basics above).`;
+Mark inPantry true only for ingredients that appear in the pantry list (or the always-available basics above).
+A number in brackets after a pantry item is how many the household has; don't use more than that.`;
 
 /**
  * Suggest recipes from the items currently in stock.
