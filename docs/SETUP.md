@@ -2,7 +2,7 @@
 
 This is a one-time setup, all on the free plan. It takes about 20 minutes. At the end the app is live at a private address that only the people you allow can open.
 
-You'll do everything in the Cloudflare dashboard at <https://dash.cloudflare.com>. Menu names below match the dashboard as of late 2026; if something has moved, search for it with the dashboard's search bar.
+You'll do everything in the Cloudflare dashboard at <https://dash.cloudflare.com>. Menu names below match the dashboard as of November 2026; if something has moved, search for it with the dashboard's search bar.
 
 ## 1. Create the database
 
@@ -25,13 +25,13 @@ Until step 3 is done, opening the address shows "Could not reach the server: …
 
 ## 3. Add the login (Cloudflare Access)
 
-1. Open **Zero Trust** from the dashboard's left menu. The first time, it asks you to pick a **team name** and the **Free** plan (it may ask for a card, but stays free for up to 50 users).
-2. Back in **Workers & Pages**, open the `sous-chef` Worker → **Settings → Domains & Routes**.
-3. Next to the `workers.dev` address, turn on **Cloudflare Access**. If preview URLs are listed, turn it on for those too (or disable preview URLs).
-4. Click **Manage Cloudflare Access**. In the application it created, edit the policy so it **allows** these **Emails**: yours and your wife's. Remove any other rule.
-5. In that application's settings, copy the **Application Audience (AUD) Tag**.
-6. In **Zero Trust → Settings → Custom Pages** (or **Team domain**), note your team domain, e.g. `yourteam.cloudflareaccess.com`.
-7. Put both values in `wrangler.jsonc` under `vars` (`ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`), or send them to Claude to commit. Neither is a secret. Pushing the change redeploys the app.
+1. In **Workers & Pages**, open the `sous-chef` Worker and go to the **Domains** tab.
+2. Under the **Production** address (`sous-chef.<your-subdomain>.workers.dev`), click **Enable Access →**. Do the same under **Preview**.
+   - If it asks you to set up **Zero Trust** first, pick a team name and the **Free** plan (it may ask for a card, but stays free for up to 50 users).
+   - When asked how to protect it, choose **Cloudflare Access**. Do **not** choose "Email domain": with a Gmail address that would let every Gmail user in.
+3. Open the Worker's **Access** tab. Edit the policy of the application Cloudflare created so it **allows** these **Emails**: yours and your wife's, added one by one. Remove any other rule.
+4. From that application's details, copy the **Application Audience (AUD) Tag** and your **team domain** (looks like `yourteam.cloudflareaccess.com`).
+5. Put both values in `wrangler.jsonc` under `vars` (`ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`). Neither is a secret. Pushing the change redeploys the app.
 
 Why both Access and the code check? Access blocks strangers at Cloudflare's edge. The Worker also checks Access's signed token on every request, so even if a route were misconfigured the pantry data would stay private.
 

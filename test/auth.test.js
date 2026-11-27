@@ -50,6 +50,12 @@ test('rejects wrong audience, issuer, expiry and tampered tokens', async () => {
   assert.equal(await authenticate(req(`${h}.${forged}.${s}`), env, fakeFetch), null);
 });
 
+test('ACCESS_AUD accepts a comma-separated list', async () => {
+  const multi = { ...env, ACCESS_AUD: `preview-aud, ${AUD}` };
+  assert.equal(await authenticate(req(await makeToken()), multi, fakeFetch), 'ben@example.com');
+  assert.equal(await authenticate(req(await makeToken({ aud: ['other'] })), multi, fakeFetch), null);
+});
+
 test('fails closed when Access is not configured', async () => {
   assert.equal(await authenticate(req(await makeToken()), {}, fakeFetch), null);
 });

@@ -68,7 +68,9 @@ async function verifyAccessJwt(token, teamDomain, aud, fetchImpl) {
   if (typeof payload.nbf === 'number' && payload.nbf > nowSec + 60) throw new Error('Token not yet valid');
   if (payload.iss !== `https://${teamDomain}`) throw new Error('Wrong issuer');
   const auds = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
-  if (!auds.includes(aud)) throw new Error('Wrong audience');
+  // ACCESS_AUD may list several tags separated by commas (e.g. production and preview apps).
+  const allowed = aud.split(',').map((a) => a.trim()).filter(Boolean);
+  if (!auds.some((a) => allowed.includes(a))) throw new Error('Wrong audience');
   if (!payload.email) throw new Error('Token has no email');
 
   return payload.email;

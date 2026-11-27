@@ -21,5 +21,23 @@
     "ACCESS_TEAM_DOMAIN": "broken-snowflake-9ddc.cloudflareaccess.com",
     "ACCESS_AUD": "95059a1661571d6f28a404da66b221f947b88b8c6ea90bb61e4932a4b92f8a70"
   },
+  // Settings for the private preview Cloudflare builds for each open pull request.
+  // Previews use their own database so unmerged code never touches the real pantry.
+  // New migrations must also be applied to it: npx wrangler d1 migrations apply sous-chef-preview --remote
+  "previews": {
+    "vars": {
+      "ACCESS_TEAM_DOMAIN": "broken-snowflake-9ddc.cloudflareaccess.com",
+      // Add the preview Access application's AUD tag here, comma-separated, if it differs.
+      "ACCESS_AUD": "95059a1661571d6f28a404da66b221f947b88b8c6ea90bb61e4932a4b92f8a70"
+    },
+    "d1_databases": [
+      {
+        "binding": "DB",
+        "database_name": "sous-chef-preview",
+        "database_id": "c91aac00-6e33-499f-bd93-22f94cf2ae44",
+        "migrations_dir": "migrations"
+      }
+    ]
+  },
   "observability": { "enabled": true }
 }
