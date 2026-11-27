@@ -42,11 +42,11 @@ const els = {
   knownDialog: $('known-dialog'),
   knownName: $('known-name'),
   knownStatus: $('known-status'),
-  knownPlus: $('known-plus'),
+  knownDone: $('known-done'),
+  knownScan: $('known-scan'),
   knownMinus: $('known-minus'),
   knownZero: $('known-zero'),
   knownEdit: $('known-edit'),
-  knownClose: $('known-close'),
   toast: $('toast'),
 };
 
@@ -276,30 +276,42 @@ els.addBtn.addEventListener('click', () => openItemDialog({ title: 'Add item' })
 
 // ---------- Known item dialog (scanned something already in the pantry) ----------
 
+// Scanning something you already have adds one straight away (you just bought it).
+// The dialog confirms it and offers the other cases: you used one, or used it all.
 function openKnown(item) {
-  state.known = item;
+  const before = item.quantity;
+  state.known = { id: item.id, before };
+  setQuantity(item, before + 1);
   els.knownName.textContent = item.name;
-  els.knownStatus.textContent = `${CATEGORY_LABELS[item.category] || 'Pantry'} · you have ${item.quantity}`;
-  els.knownMinus.disabled = item.quantity === 0;
-  els.knownZero.disabled = item.quantity === 0;
+  els.knownStatus.textContent = `Added 1. You now have ${before + 1}.`;
+  els.knownMinus.disabled = before === 0;
+  els.knownZero.disabled = false;
   els.knownDialog.showModal();
 }
 
-function knownApply(next) {
-  const item = state.items.find((i) => i.id === state.known.id) || state.known;
-  els.knownDialog.close();
-  const q = Math.max(0, next(item.quantity));
-  setQuantity(item, q);
-  toast(q === 0 ? `${item.name}: used up, added to shopping` : `${item.name}: ${q}`);
+function knownItem() {
+  return state.items.find((i) => i.id === state.known.id);
 }
 
-els.knownPlus.addEventListener('click', () => knownApply((q) => q + 1));
-els.knownMinus.addEventListener('click', () => knownApply((q) => q - 1));
-els.knownZero.addEventListener('click', () => knownApply(() => 0));
-els.knownClose.addEventListener('click', () => els.knownDialog.close());
+function knownApply(quantity) {
+  const item = knownItem();
+  els.knownDialog.close();
+  if (!item) return;
+  setQuantity(item, Math.max(0, quantity));
+  toast(item.quantity === 0 ? `${item.name}: used up, added to shopping` : `${item.name}: ${item.quantity}`);
+}
+
+els.knownDone.addEventListener('click', () => els.knownDialog.close());
+els.knownMinus.addEventListener('click', () => knownApply(state.known.before - 1));
+els.knownZero.addEventListener('click', () => knownApply(0));
+els.knownScan.addEventListener('click', () => {
+  els.knownDialog.close();
+  els.scanBtn.click();
+});
 els.knownEdit.addEventListener('click', () => {
   els.knownDialog.close();
-  openEdit(state.items.find((i) => i.id === state.known.id) || state.known);
+  const item = knownItem();
+  if (item) openEdit(item);
 });
 
 // ---------- Scanning ----------
