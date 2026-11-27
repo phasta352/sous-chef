@@ -14,5 +14,9 @@
   "devDependencies": {
     "@zxing/library": "^0.21.3",
     "wrangler": "^4.150.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.14.0",
+    "zod": "^4.6.7"
   }
 }

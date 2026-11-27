@@ -1,5 +1,9 @@
 import { authenticate } from './auth.js';
 import { HttpError, listItems, lookupBarcode, createItem, updateItem, deleteItem } from './items.js';
+import {
+  listRecipes, saveRecipe, updateRecipe, deleteRecipe, suggest, importFromUrl,
+  listShopping, addShopping, deleteShopping,
+} from './recipes.js';
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -39,6 +43,31 @@ async function handleApi(request, env, url) {
   const lookupMatch = pathname.match(/^\/api\/lookup\/([^/]+)$/);
   if (lookupMatch && method === 'GET') {
     return json(await lookupBarcode(env, decodeURIComponent(lookupMatch[1])));
+  }
+
+  if (pathname === '/api/recipes') {
+    if (method === 'GET') return json({ recipes: await listRecipes(env) });
+    if (method === 'POST') return json({ recipe: await saveRecipe(env, request, email) }, 201);
+  }
+  if (pathname === '/api/recipes/suggest' && method === 'POST') return json(await suggest(env, request));
+  if (pathname === '/api/recipes/import' && method === 'POST') return json(await importFromUrl(env, request));
+
+  const recipeMatch = pathname.match(/^\/api\/recipes\/(\d+)$/);
+  if (recipeMatch) {
+    const id = Number(recipeMatch[1]);
+    if (method === 'PATCH') return json({ recipe: await updateRecipe(env, request, id) });
+    if (method === 'DELETE') return json(await deleteRecipe(env, id));
+  }
+
+  if (pathname === '/api/shopping') {
+    if (method === 'GET') return json({ items: await listShopping(env) });
+    if (method === 'POST') return json(await addShopping(env, request, email), 201);
+  }
+  const shopMatch = pathname.match(/^\/api\/shopping\/(\d+)$/);
+  if (shopMatch && method === 'DELETE') return json(await deleteShopping(env, Number(shopMatch[1])));
+
+  if (pathname === '/api/config' && method === 'GET') {
+    return json({ aiEnabled: Boolean(env.ANTHROPIC_API_KEY) });
   }
 
   return json({ error: 'Not found' }, 404);

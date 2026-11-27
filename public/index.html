@@ -13,13 +13,20 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="stylesheet" href="/app.css">
 </head>
-<body>
+<body class="on-pantry">
   <header class="topbar">
     <h1>Sous Chef</h1>
     <span id="user" class="user" aria-live="polite"></span>
   </header>
 
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button type="button" role="tab" class="tab" data-view="pantry" aria-selected="true">Pantry</button>
+    <button type="button" role="tab" class="tab" data-view="recipes" aria-selected="false">Recipes</button>
+    <button type="button" role="tab" class="tab" data-view="shopping" aria-selected="false">Shopping <span id="shop-count" class="count" hidden></span></button>
+  </nav>
+
   <main id="main">
+  <section id="view-pantry" class="view" role="tabpanel">
     <div class="toolbar">
       <input id="search" type="search" placeholder="Search your pantry" autocomplete="off" aria-label="Search items">
       <div class="chips" role="radiogroup" aria-label="Show">
@@ -31,9 +38,52 @@
 
     <p id="error" class="banner error" hidden></p>
     <div id="list" aria-live="polite"><p class="muted center">Loading…</p></div>
+  </section>
+
+  <section id="view-recipes" class="view" role="tabpanel" hidden>
+    <div class="card">
+      <h2>Ask AI for ideas</h2>
+      <p id="ai-off" class="muted small" hidden>AI isn't set up yet. Add your Claude API key in Cloudflare (see the setup guide), then reload.</p>
+      <form id="suggest-form" class="stack">
+        <input id="suggest-request" maxlength="300" placeholder="Anything in mind? e.g. quick dinner, vegetarian (optional)" autocomplete="off">
+        <label class="switch-row inline">
+          <span>Can suggest things to buy</span>
+          <input id="suggest-shopping" type="checkbox" role="switch">
+        </label>
+        <button type="submit" id="suggest-btn" class="btn primary">Suggest recipes</button>
+      </form>
+    </div>
+
+    <div id="suggestions"></div>
+
+    <div class="card">
+      <h2>Add from a website</h2>
+      <form id="import-form" class="row">
+        <input id="import-url" type="url" inputmode="url" placeholder="Paste a recipe link" autocomplete="off" required>
+        <button type="submit" id="import-btn" class="btn">Import</button>
+      </form>
+    </div>
+
+    <div class="section-head">
+      <h2>Saved recipes</h2>
+      <div class="chips">
+        <button type="button" class="chip rchip" data-rfilter="all" aria-pressed="true">All</button>
+        <button type="button" class="chip rchip" data-rfilter="fav" aria-pressed="false">★ Favorites</button>
+      </div>
+    </div>
+    <div id="saved-list"><p class="muted center">Loading…</p></div>
+  </section>
+
+  <section id="view-shopping" class="view" role="tabpanel" hidden>
+    <form id="shop-form" class="row">
+      <input id="shop-name" maxlength="200" placeholder="Add something to buy" autocomplete="off" required>
+      <button type="submit" class="btn primary">Add</button>
+    </form>
+    <div id="shop-list"></div>
+  </section>
   </main>
 
-  <nav class="actions">
+  <nav class="actions" id="pantry-actions">
     <button type="button" id="scan-btn" class="btn primary">
       <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M3 5h2v14H3zm4 0h1v14H7zm3 0h2v14h-2zm4 0h1v14h-1zm3 0h1v14h-1zm3 0h1v14h-1z"/></svg>
       Scan barcode
@@ -99,6 +149,30 @@
         <button type="button" id="known-edit" class="btn link">Edit</button>
         <span class="spacer"></span>
         <button type="button" id="known-close" class="btn">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Recipe detail -->
+  <dialog id="recipe-dialog" class="recipe-dialog">
+    <div class="recipe">
+      <div class="recipe-head">
+        <h2 id="r-title"></h2>
+        <button type="button" id="r-fav" class="star" aria-pressed="false" aria-label="Favorite" hidden>☆</button>
+      </div>
+      <p id="r-meta" class="muted small"></p>
+      <p id="r-summary"></p>
+      <a id="r-source" class="small" target="_blank" rel="noopener noreferrer" hidden>View original recipe</a>
+      <h3>Ingredients</h3>
+      <ul id="r-ingredients" class="ingredients"></ul>
+      <button type="button" id="r-add-missing" class="btn" hidden></button>
+      <h3>Steps</h3>
+      <ol id="r-steps" class="steps"></ol>
+      <div class="dialog-buttons sticky">
+        <button type="button" id="r-delete" class="btn danger" hidden>Delete</button>
+        <span class="spacer"></span>
+        <button type="button" id="r-close" class="btn">Close</button>
+        <button type="button" id="r-save" class="btn primary" hidden>Save recipe</button>
       </div>
     </div>
   </dialog>

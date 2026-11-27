@@ -10,7 +10,7 @@ Runs on Cloudflare's free tier: a Worker serves the app and API, D1 stores the i
 
 - [x] Step 1: foundation, deploy pipeline, login
 - [x] Step 2: inventory with barcode scanning and manual entry
-- [ ] Step 3: AI recipes and shopping list
+- [x] Step 3: AI recipes, saved recipes, recipe import, and shopping list
 
 ## Layout
 
@@ -19,7 +19,10 @@ Runs on Cloudflare's free tier: a Worker serves the app and API, D1 stores the i
 | `src/worker.js` | API routes; serves the static app for everything else |
 | `src/auth.js` | Verifies the Cloudflare Access token on every API call |
 | `src/items.js` | Pantry item API and barcode lookup (Open Food Facts) |
+| `src/recipes.js` | Saved recipes and shopping list API |
+| `src/ai.js` | Claude API: recipe suggestions and recipe import from a link |
 | `public/` | The phone web app (installable to the home screen) |
+| `public/recipes.js`, `public/shopping.js` | Recipes and Shopping tabs |
 | `public/scanner.js` | Camera barcode scanner (built-in BarcodeDetector, or bundled ZXing on iPhone) |
 | `migrations/` | D1 database schema |
 | `wrangler.jsonc` | Cloudflare config |
